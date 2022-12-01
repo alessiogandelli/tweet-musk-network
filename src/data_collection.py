@@ -50,7 +50,8 @@ paginator = tweepy.Paginator(
     musk_id,                            # Some argument for this method      # Some argument for this method
     exclude=['retweets', 'replies'],       # Some argument for this method
     start_time=start_date,     # Some argument for this method
-    max_results=100,                       # How many tweets per page                               # How many pages to retrieve
+    max_results=100,                       # How many tweets per page
+    tweet_fields=['created_at', 'text', 'author_id', 'in_reply_to_user_id', 'context_annotations'], # Which tweet fields to return                         
 )
 
 tweets = []
