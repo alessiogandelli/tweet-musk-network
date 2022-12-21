@@ -8,7 +8,14 @@ from time import sleep
 import dotenv 
 import os
 import igraph as ig
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.ticker as ticker
+
+
 #%%
+'''SETUP'''
 
 dotenv.load_dotenv()
 
@@ -28,10 +35,11 @@ auth = tweepy.OAuth1UserHandler(
 #Instantiate the tweepy API
 api = tweepy.API(auth, wait_on_rate_limit=True)
 client = tweepy.Client(bearer_token=bearer)
+
+
+
 # %%
-
-
-
+'''GET TWEETS of elon musk'''
 # parameters of the search
 musk_id = 44196397
 start_date = datetime.datetime(2022, 10, 13)
@@ -51,13 +59,16 @@ paginator = tweepy.Paginator(
 
 # %%
 
-# generate graph 
+# generate graph  and dataframe
 df = pd.DataFrame()
+
+data = {}
 
 g = ig.Graph(directed=True)
 for page in paginator.flatten():
     args = {'created_at': page['created_at'], 
             'text': page['text'],
+            'id': page['id'],
             'author_id': page['author_id'],
             'conversation_id': page['conversation_id'],
             'in_reply_to_user_id': page['in_reply_to_user_id'],
@@ -67,34 +78,35 @@ for page in paginator.flatten():
             'like_count': page['public_metrics']['like_count'],
             'quote_count': page['public_metrics']['quote_count'],
             }
-    pd.concat(df, args)
+    
     #get retweet count
-
+    data[page['id']] = args
 
     # add vertice with attributes 
     g.add_vertex(page.data['id'] ,**args)
 
-#%%
-#plot graph
-fig, ax = plt.subplots(figsize=(40,10))
-ig.plot(
-    g28,
-    target=ax,
-    layout="tree", # print nodes in a circular layout
-    vertex_size=[v['retweet_count'] /50000 for v in g.vs], # size of nodes proportional to retweet count
-    vertex_label=[v['created_at'] if v['retweet_count'] > 253968 else '' for v in g.vs], # label nodes with tweet text
-    vertex_label_size=20,
-)
 
-18-11-2022
 
-28-10-2022
+# data to dataframe 
+df = pd.DataFrame(data).T
+df['created_at'] = df['created_at'].apply(lambda x: x - timedelta(hours=7))
+df['text'] = df['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
 
-#%%
-#fget nodes of 28 october 
-nodes = [v for v in g.vs if v['created_at'].date() == datetime.date(2022, 10, 28)]
+link = 'https://www.searchenginejournal.com/elon-musks-twitter-takeover-a-timeline-of-events/470927/#close'
 
-g28 = g.subgraph(nodes)
+
+
+# %%
+conv = 1604617643973124097
+
+i want to
+
+    # add vertice with attributes 
+   # g.add_vertex(page.data['id'] ,**args)
+
+df_resign = pd.DataFrame(data).T
+df['created_at'] = df['created_at'].apply(lambda x: x - timedelta(hours=7))
+df['text'] = df['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
 
 
 # %%
