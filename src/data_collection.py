@@ -34,8 +34,9 @@ auth = tweepy.OAuth1UserHandler(
 
 #Instantiate the tweepy API
 api = tweepy.API(auth, wait_on_rate_limit=True)
-client = tweepy.Client(bearer_token=bearer)
+client = tweepy.Client(bearer_token=bearer, wait_on_rate_limit=True)
 
+link = 'https://www.searchenginejournal.com/elon-musks-twitter-takeover-a-timeline-of-events/470927/#close'
 
 
 # %%
@@ -56,16 +57,14 @@ paginator = tweepy.Paginator(
 
 
 
-
-# %%
-
 # generate graph  and dataframe
 df = pd.DataFrame()
-
 data = {}
-
 g = ig.Graph(directed=True)
+
+# loop over all the tweets
 for page in paginator.flatten():
+
     args = {'created_at': page['created_at'], 
             'text': page['text'],
             'id': page['id'],
@@ -79,7 +78,7 @@ for page in paginator.flatten():
             'quote_count': page['public_metrics']['quote_count'],
             }
     
-    #get retweet count
+    #store args in dict
     data[page['id']] = args
 
     # add vertice with attributes 
@@ -92,21 +91,92 @@ df = pd.DataFrame(data).T
 df['created_at'] = df['created_at'].apply(lambda x: x - timedelta(hours=7))
 df['text'] = df['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
 
-link = 'https://www.searchenginejournal.com/elon-musks-twitter-takeover-a-timeline-of-events/470927/#close'
 
 
 
-# %%
+# %% build conversation for elin musk resign 
+'''GET all REPLIES to elon musk resign poll'''
+
 conv = 1604617643973124097
+start_date = datetime.datetime(2022, 12, 19)
 
-i want to
+
+paginator = tweepy.Paginator(
+    client.search_recent_tweets,              # The method you want to use
+    query='conversation_id:' + str(conv), # The user id,
+    max_results=100,                       # How many tweets per page
+    tweet_fields=['created_at', 'text', 'author_id', 'conversation_id', 'in_reply_to_user_id','referenced_tweets', 'public_metrics'], # Which tweet fields to return                         
+)
+
+
+df_resign = pd.DataFrame()
+
+data = {}
+i = 0
+
+time = datetime.datetime.now()
+
+for page in paginator.flatten():
+    i += 1
+
+    if i % 10000 == 0:
+        print(i, datetime.datetime.now() - time )
+    args = {'created_at': page['created_at'], 
+            'text': page['text'],
+            'id': page['id'],
+            'author_id': page['author_id'],
+            'conversation_id': page['conversation_id'],
+            'replied_to': page['referenced_tweets'][0]['id'],
+            'in_reply_to_user_id': page['in_reply_to_user_id'],
+            'retweet_count': page['public_metrics']['retweet_count'],
+            'reply_count': page['public_metrics']['reply_count'],
+            'like_count': page['public_metrics']['like_count'],
+            'quote_count': page['public_metrics']['quote_count'],
+           
+            }
+    
+    #get retweet count
+    data[page['id']] = args
+
+    
+    if i%400000 == 0:
+        break # only get 400k tweets
+
+
 
     # add vertice with attributes 
    # g.add_vertex(page.data['id'] ,**args)
 
 df_resign = pd.DataFrame(data).T
-df['created_at'] = df['created_at'].apply(lambda x: x - timedelta(hours=7))
-df['text'] = df['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
+df_resign['created_at'] = df_resign['created_at'].apply(lambda x: x - timedelta(hours=7))
+df_resign['text'] = df_resign['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
+
+df_resign.to_csv('resign_tweet.csv')
+
+# %%
+# create a matrix from numpy 
+#save df to csv 
 
 
+
+
+
+# %%
+mentions = []
+g = ig.Graph(directed=True)
+
+for tweet in df_resign.iterrows():
+    #g.add_vertex(tweet[1]['author_id'])
+
+    #g.add_edge(tweet[1]['author_id'], tweet[0])
+    #if text contains @lexfridman print text
+    if(tweet[1]['in_reply_to_user_id'] == musk_id):
+        mentions += re.findall(r'@\w+', tweet[1]['text'])
+        if '@SnoopDogg' in tweet[1]['text']:
+            print(tweet[1]['text'])
+
+
+    if tweet[1]['in_reply_to_user_id'] == musk_id:
+        mentions += re.findall(r'@\w+', tweet[1]['text'])
+       
 # %%
