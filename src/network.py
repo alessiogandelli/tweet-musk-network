@@ -152,3 +152,13 @@ def ig_to_json(graph, path):
     return os.path.exists(path)
 
 # %%
+#remove attribute from graph
+g_replied1.vs['text'] = ''
+# %%
+
+#write gml file
+# %%
+#del g_replied1.vs['id']
+g_replied1.write_gml('resign_tweet.gml', ids="no-such-attribute")
+
+# %%
