@@ -1,4 +1,6 @@
 #%%
+
+''' scrape twitter data of elon musk and save it to a csv file'''
 import tweepy
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -94,6 +96,8 @@ df['text'] = df['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
 
 
 
+
+
 # %% build conversation for elin musk resign 
 '''GET all REPLIES to elon musk resign poll'''
 
@@ -153,30 +157,5 @@ df_resign['text'] = df_resign['text'].apply(lambda x: 'meme' if x.startswith('ht
 
 df_resign.to_csv('resign_tweet.csv')
 
-# %%
-# create a matrix from numpy 
-#save df to csv 
 
-
-
-
-
-# %%
-mentions = []
-g = ig.Graph(directed=True)
-
-for tweet in df_resign.iterrows():
-    #g.add_vertex(tweet[1]['author_id'])
-
-    #g.add_edge(tweet[1]['author_id'], tweet[0])
-    #if text contains @lexfridman print text
-    if(tweet[1]['in_reply_to_user_id'] == musk_id):
-        mentions += re.findall(r'@\w+', tweet[1]['text'])
-        if '@SnoopDogg' in tweet[1]['text']:
-            print(tweet[1]['text'])
-
-
-    if tweet[1]['in_reply_to_user_id'] == musk_id:
-        mentions += re.findall(r'@\w+', tweet[1]['text'])
-       
 # %%
