@@ -1,6 +1,9 @@
 
 #%% scatter plot elon musk tweets 
 
+# import data
+#df = pd.read_csv('musk_timeline.csv', index_col=0)
+
 fig, ax = plt.subplots(figsize=(20,10))
 sns.scatterplot(data=df, x='created_at', y='retweet_count', hue='quote_count', size='reply_count', sizes=(100, 1000), ax=ax)
 

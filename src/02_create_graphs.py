@@ -27,7 +27,7 @@ def explore_tree(g,n, df_n, total_reply):
         
         df_n = df_n[df_n['reply_count'] > 0] # filter only the ones that have replies
         print('al livello ',n ,df_n.shape[0], 'reply con reply') 
-        print('biggest thread',df_n.value_counts('reply_count').tail(1).index.tolist()[0])
+        # print('biggest thread',df_n.value_counts('reply_count').tail(1).index.tolist()[0])
         df_n = df[df['replied_to'].isin(df_n.index)] # take from the main dataset the ones that replied to the ones in df_n
         edges = []
 
@@ -51,11 +51,9 @@ def explore_tree(g,n, df_n, total_reply):
 
 ''' returns a tree of replies to a tweet'''
 def create_reply_tree(musk_resig):
-
-    g = ig.Graph(directed=True)
-
     edges = []
 
+    g = ig.Graph(directed=True)
     g.add_vertex(str(musk_resig))
 
     # add all nodes and first level edges to the graph
@@ -71,12 +69,12 @@ def create_reply_tree(musk_resig):
     # recursively explore the tree and fill the graph
     df_first = df[df['replied_to'] == musk_resig] # filter the ones that replied to musk's tweet
     total_reply = 0
-    explore_tree(g, 1, df_first, total_reply)
+    g = explore_tree(g, 1, df_first, total_reply)
 
     # remove nodes with no edges that are missing, further investigation later 
     g.vs['degree'] = g.degree()
     excluded = g.vs.select(degree = 0)
-    excluded['name'].to_csv('excluded.csv')
+    #excluded['name'].to_csv('excluded.csv')
     g.delete_vertices(excluded)
 
     # fix levels 
@@ -99,7 +97,7 @@ def prune_tree(g):
     g_replied.vs['indegree'] = g_replied.indegree()
 
     #del g_replied.vs['id'] # if you have problems 
-    g_replied.write_gml('resign_tweet.gml', ids="no-such-attribute")
+    g_replied.write_gml('resign_replies.gml', ids="no-such-attribute")
 
     return g_replied
 

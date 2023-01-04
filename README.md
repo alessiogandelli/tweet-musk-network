@@ -1,9 +1,80 @@
 # tweet-musk-network
+First i have scraped all the tweet of elon musk to have an overview of its twitter presence during his hourney as ceo, then i want to focus on one or more discussion on some selected tweets, for example the poll where he ask if he should resign
 
 # extract the data using twitter api with tweepy 
+in the file 01_data_collection.py there is the twitter scraping part, the file have been saved into files 
 
-- get all tweet of elon musk 
-- get all tweet in reply to the poll of elon musk about resigning as ceo of twitter 
+
+- get api keys from twitter developer platform 
+- get elon musk profile id (44196397)
+- select a start data (13-10-22) (the acquisition have been actualized on 28th October)
+
+Since there are limits to the api call we can do there are some things we have to do:
+- wait_on_rate_limit=True  when creating the client so it waits by itself without the need to run the script every 15 minutes 
+
+- use a paginator to get more than 100 results
+the first parameter is the method we want to use, i.e. the data we want to get and the other parameters are the parameters of this function, since we are scraping tweets we have to choose the fields we want to retrieve and the one we do not want  
+
+
+
+paginator = tweepy.Paginator(
+    client.get_users_tweets,               # The method you want to use
+    musk_id,                               # The user id
+    exclude=['retweets', 'replies'],       # Exclude retweets and replies
+    start_time=start_date,                 # The start date
+    max_results=100,                       # How many tweets per page
+    tweet_fields=['created_at', 'text', 'author_id', 'conversation_id', 'in_reply_to_user_id', 'context_annotations', 'public_metrics'], # Which tweet fields to return                         
+)
+
+
+## get all tweet of elon musk 
+
+I extracted 411 tweet of elon musk, the first one is from 2022-10-12 and the last one is from 2023-01-03
+
+i have used the method get_users_tweets that allows you to extract all the tweet of a user, and luckily is not limited to the previous week 
+
+then these tweets have been saved in a csv file named musk_timeline 
+
+## get all tweet in reply to the poll of elon musk about resigning as ceo of twitter 
+
+This was not easier as the previous task because there is not a specific api call to get the replies to a tweet, so i have to use the search api call with the constraint that the field conversation_id is equal to the one of the poll.
+
+I extracted 400k tweets and saved in a file named resign_replies.csv
+
+
+# conversation tree 
+
+The conversation under a tweet can be seen as a tree of replies since there are tweets that reply to the poll but there are also tweets that reply to these replies. Building a tree is useful to have a clear structure of the conversations, we can devide it in layers starting from the poll and going down to the replies to the replies to the replies to the poll.
+
+I use Igraph for performing the analysis because under the hood it uses C so it is more efficent for big graphs. 
+
+To populate the Tree i use a recoursive approach with a  Breadth First Search (BFS) algorithm, this mean that i'm going layer by layer 
+
+Then for the porpuse of the graph i have pruned it removing all the leaves ( the tweets with no replies) to save space and time. 
+
+The graph then have been saved in a file named resign_graph.gml 
+
+## problems 
+
+Since i have used the search api call i did not get all the replies, even if at the moment of the scrape there was 399k replies 
+
+[here](https://stackoverflow.com/questions/72016766/tweepy-only-lets-me-get-100-results-how-do-i-get-more-ive-read-about-paginati) i stated that many developers had consinstency problem in getting elon musk data 
+
+after filling the tree there were 107k tweets without edges, so that weren't replying to any tweet, and this should not happen so it is obvious that there is some data that is missing, i saved the id of these tweets in a csv file named excluded.csv for further investigation 
+
+
+
+
+# text analysis 
+
+
+
+
+
+
+
+
+
 
 i have used search recent tweets but it is not working properly 
 

@@ -93,7 +93,8 @@ df = pd.DataFrame(data).T
 df['created_at'] = df['created_at'].apply(lambda x: x - timedelta(hours=7))
 df['text'] = df['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
 
-
+# save data
+df.to_csv('musk_timeline.csv')
 
 
 
@@ -155,7 +156,7 @@ df_resign = pd.DataFrame(data).T
 df_resign['created_at'] = df_resign['created_at'].apply(lambda x: x - timedelta(hours=7))
 df_resign['text'] = df_resign['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
 
-df_resign.to_csv('resign_tweet.csv')
+df_resign.to_csv('resign_replies.csv')
 
 
 # %%
