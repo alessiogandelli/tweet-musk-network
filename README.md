@@ -42,6 +42,7 @@ This was not easier as the previous task because there is not a specific api cal
 I extracted 400k tweets and saved in a file named resign_replies.csv
 
 
+
 # conversation tree 
 
 The conversation under a tweet can be seen as a tree of replies since there are tweets that reply to the poll but there are also tweets that reply to these replies. Building a tree is useful to have a clear structure of the conversations, we can devide it in layers starting from the poll and going down to the replies to the replies to the replies to the poll.
@@ -53,6 +54,7 @@ To populate the Tree i use a recoursive approach with a  Breadth First Search (B
 Then for the porpuse of the graph i have pruned it removing all the leaves ( the tweets with no replies) to save space and time. 
 
 The graph then have been saved in a file named resign_graph.gml 
+
 
 ## problems 
 
@@ -66,7 +68,22 @@ after filling the tree there were 107k tweets without edges, so that weren't rep
 
 
 # text analysis 
+install fasttext to detectthe language of the tweets, if you have problem with wheel probably the problem is that you have to set env variables
+ 
+```export CPLUS_INCLUDE_PATH=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Headers```
+```export C_INCLUDE_PATH=/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Headers```
 
+fast text is used to detect the language of the tweet in order to obtain a better understanding of the conversation, i used this library that use a pretrained model to classify text because is way faster than using the traditional one 10 seconds for 400k tweets vs 13 sec for 1000 tweets using langdetect
+
+from the 400k tweets i removed hastaghs and mentions url punctuation and all to lower case, then i removed all the lines with no characters a-z  
+
+now the df has 377692 rows of which 312452 are english, 39959 portoguese and  5081 french 
+
+but there is a problem in fact when there is the word dont it is classified as french while no is classfied as portoguese 
+
+many classifies as italian contains nooooo with many o
+
+after cleaning the english tweets are 355892
 
 
 
