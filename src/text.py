@@ -7,9 +7,15 @@ import fasttext
 
 path ='/Users/alessiogandelli/dev/uni/tweet-musk-network/data/resign_replies.csv'
 path_to_pretrained_model = '/Users/alessiogandelli/dev/uni/tweet-musk-network/data/lid.176.bin'
+stop_words_path = '/Users/alessiogandelli/dev/uni/tweet-musk-network/src/stopwords.txt'
 
 fmodel = fasttext.load_model(path_to_pretrained_model)
 
+lemmatizer = nltk.WordNetLemmatizer()
+
+#load stop words 
+with open(stop_words_path, 'r') as f:
+    stop_words = eval(f.read())
 #%%
 df = pd.read_csv(path, index_col=0)
 
@@ -37,6 +43,12 @@ df['text'] = df['text'].str.replace(r"\n", "", regex=True) # new line
 df['text'] = df['text'].str.replace(r"no+", "no", regex=True) #replace nooooo with no 
 df['text'] = df['text'].str.replace(r"(no)+", "no", regex=True)# replace multiple nonono with no
 
+# replace dont with do not
+df['text'] = df['text'].str.replace(r"dont", "do not", regex=True)
+df['text'] = df['text'].str.replace(r"cant", "can not", regex=True)
+df['text'] = df['text'].str.replace(r"didnt", "did not", regex=True)
+df['text'] = df['text'].str.replace(r"doesnt", "does not", regex=True)
+
 
 
 df = df[df['text'].str.contains(r"[a-z]", regex=True)]#remove lines with no characters a-z
@@ -52,12 +64,17 @@ df.loc[(df['text'].str.contains(r"dont", regex=True)) & (df['lang'] == 'fr'), 'l
 df.loc[(df['text'].str.contains(r"bro", regex=True)) & (df['lang'] == 'pt'), 'lang'] = 'en' # bro in portuguese
 df.loc[(df['text'].str.contains(r"hell no", regex=True)) & (df['lang'] == 'es'), 'lang'] = 'en' # hell no in spanish
 
-
+# take only english 
+df = df[df['lang'] == 'en']
 
 # %%
 # remove stop words
-stop_words = set(nltk.corpus.stopwords.words("english"))
+df['text'] = df['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop_words)]))
+
+# tokenize
+df['text'] = df['text'].apply(lambda x: nltk.word_tokenize(x))
+
+#lemmatize
+df['text'] = df['text'].apply(lambda x: [lemmatizer.lemmatize(word) for word in x])
 
 
-# set max rows to display
-pd.set_option('display.max_rows', 1000)

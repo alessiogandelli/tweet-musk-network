@@ -85,6 +85,12 @@ many classifies as italian contains nooooo with many o
 
 after cleaning the english tweets are 355892
 
+then changed the cant to can not 
+
+custom stopwords created starting from the most common words in the dataset and avoiding the negative words 
+
+then i have used the wordcloud library to create a wordcloud of the most common words in the dataset
+
 
 
 
