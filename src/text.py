@@ -11,6 +11,9 @@ import numpy as np
 import pickle
 import gsdmm
 from gsdmm import MovieGroupProcess
+from textblob import TextBlob
+import mgp 
+from mgp import MovieGroupProcess
 
 
 path ='/Users/alessiogandelli/dev/uni/tweet-musk-network/data/resign_replies.csv'
@@ -137,12 +140,11 @@ df = df[df['lang'] == 'en']
 
 #%%
 
-'''SENTIMENT ANALYSIS'''
 
-df['sentiment_vader'] = df['text'].apply(lambda x: analyzer.polarity_scores(x)['compound'])
-
+# we can see two spikes at -0.2960 and 0.4019 which corresponds respectively to the words no and yes
 
 
+#%%
 '''WORDCLOUDS'''
 
 text = ' '.join(df['tokens'].apply(lambda x: ' '.join(x)))
@@ -155,15 +157,40 @@ make_wordcloud(bigrams, 'bigrams_wordcloud.png', freq=True)
 make_wordcloud(word_tfidf, 'tf_idf_wordcloud.png', freq=True)
 
 #%%
+
+'''SENTIMENT ANALYSIS'''
+# import textblob
+
+df['sentiment_vader'] = df['text'].apply(lambda x: analyzer.polarity_scores(x)['compound'])
+
+df['sentiment_vader'].hist(bins=50)
+
+no = -0.2960
+yes = 0.4019
+# add annotation at 0.4019, 200000
+plt.text(0.38, 22000, 'yes')
+plt.text(-0.32, 55000, 'no')
+plt.title('Sentiment Analysis - VADER')
+plt.xlabel('Sentiment Score')
+plt.ylabel('Number of Tweets')
+plt.savefig('sentiment_hist.png', dpi=300)
+
 #bigrams list but only of the one with sentiment > 0 
-bigrams_list_pos = [item for sublist in df[df['sentiment_vader'] > 0.5]['tokens'].tolist() for item in sublist]
-bigrams_list_neg = [item for sublist in df[df['sentiment_vader'] < 0]['tokens'].tolist() for item in sublist]
+pos_list = [item for sublist in df[df['sentiment_vader'] >= yes]['tokens'].tolist() for item in sublist]
+neg_list = [item for sublist in df[df['sentiment_vader'] <= no]['tokens'].tolist() for item in sublist]
+neu_list = [item for sublist in df[(df['sentiment_vader'] > no) & (df['sentiment_vader'] < yes)]['tokens'].tolist() for item in sublist]
 
-bigrams_pos = pd.Series(bigrams_list_pos).value_counts().to_dict()
-bigrams_neg = pd.Series(bigrams_list_neg).value_counts().to_dict()
+pos_dict = pd.Series(pos_list).value_counts().to_dict()
+neg_dict = pd.Series(neg_list).value_counts().to_dict()
+neu_dict = pd.Series(neu_list).value_counts().to_dict()
 
-make_wordcloud(bigrams_pos, 'text_pos_wordcloud.png', freq=True)
-make_wordcloud(bigrams_neg, 'text_neg_wordcloud.png', freq=True)
+make_wordcloud(pos_dict, 'text_pos_wordcloud.png', freq=True)
+make_wordcloud(neg_dict, 'text_neg_wordcloud.png', freq=True)
+make_wordcloud(neu_dict, 'text_neu_wordcloud.png', freq=True)
+
+
+
+
 # twitter shaped wordcloud
 
 
@@ -176,13 +203,17 @@ make_wordcloud(bigrams_neg, 'text_neg_wordcloud.png', freq=True)
 #%%
 # merge all df['text'] into a single list of lists 
 docs = df['tokens'].tolist()
+
+# remove no from docs
+docs = [[word for word in doc if word != 'no'] for doc in docs]
+docs = [[word for word in doc if word != 'not'] for doc in docs]
 # %%
 mgp = MovieGroupProcess(K=4, alpha=0.1, beta=0.1, n_iters=30)
 vocab = set(x for doc in docs for x in doc)
 n_terms = len(vocab)
 y = mgp.fit(docs, n_terms)
 # save model
-with open('4clusters.model', 'wb') as f:
+with open('4clustersnono.model', 'wb') as f:
     pickle.dump(mgp, f)
     f.close()
 
@@ -241,10 +272,10 @@ print('*'*20)# show the top 5 words in term frequency for each cluster
 topic_indices = np.arange(start=0, stop=len(doc_count), step=1)
 top_words(mgp.cluster_word_distribution, topic_indices, 5)
 # %%
-# assign topics to each document
+# assign tweets to clusters
+mgp.load('/Users/alessiogandelli/dev/uni/tweet-musk-network/data/models/4clusters.model')
 
-# df['sentiment_vader'] histogram
-df['sentiment_vader'].hist(bins=50)
+
 
 
 
