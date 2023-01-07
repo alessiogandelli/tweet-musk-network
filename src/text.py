@@ -1,14 +1,16 @@
 #%%
-
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 import nltk
 import pandas as pd
 import fasttext
-
+from nltk import ngrams
 
 path ='/Users/alessiogandelli/dev/uni/tweet-musk-network/data/resign_replies.csv'
 path_to_pretrained_model = '/Users/alessiogandelli/dev/uni/tweet-musk-network/data/lid.176.bin'
 stop_words_path = '/Users/alessiogandelli/dev/uni/tweet-musk-network/src/stopwords.txt'
 
+# model for language detection
 fmodel = fasttext.load_model(path_to_pretrained_model)
 
 lemmatizer = nltk.WordNetLemmatizer()
@@ -16,9 +18,23 @@ lemmatizer = nltk.WordNetLemmatizer()
 #load stop words 
 with open(stop_words_path, 'r') as f:
     stop_words = eval(f.read())
+
+
+def make_wordcloud(txt):
+    # word cloud
+    wordcloud = WordCloud(  width = 800, height = 800,
+                            background_color ='white',  
+                            min_font_size = 10)
+
+    wordcloud.generate(' '.join(txt.apply(lambda x: ' '.join(x))))
+    # plot the WordCloud image
+    plt.figure(figsize = (8, 8), facecolor = None)
+    plt.imshow(wordcloud)
+    plt.axis("off")
+    plt.tight_layout(pad = 0)
+    plt.show()
 #%%
 df = pd.read_csv(path, index_col=0)
-
 
 
 '''PREPROCESSING'''
@@ -33,7 +49,7 @@ df = df.assign(urls = df['text'].str.findall(r"http\S+"))
 df = df.assign(mentions = df['text'].str.findall(r"@(\w+)"))
 df = df.assign(hashtags = df['text'].str.findall(r"#(\w+)"))
 
-
+# remove hastags and mentions and urls and punctuation and to lower case
 df['text'] = df['text'].str.replace(r"#(\w+)", "", regex=True) # hastags
 df['text'] = df['text'].str.replace(r"@(\w+)", "", regex=True) # mentions 
 df['text'] = df['text'].str.replace(r"http\S+", "", regex=True)# urls
@@ -70,11 +86,39 @@ df = df[df['lang'] == 'en']
 # %%
 # remove stop words
 df['text'] = df['text'].apply(lambda x: ' '.join([word for word in x.split() if word not in (stop_words)]))
-
 # tokenize
 df['text'] = df['text'].apply(lambda x: nltk.word_tokenize(x))
-
 #lemmatize
 df['text'] = df['text'].apply(lambda x: [lemmatizer.lemmatize(word) for word in x])
 
+
+
+df['bigrams'] = df['text'].apply(lambda x: list(ngrams(x, 2)))
+df['bigrams'] = df['bigrams'].apply(lambda x: ['_'.join(i) for i in x])
+
+
+
+#%%
+# word cloud
+make_wordcloud(txt=df['text'])
+make_wordcloud(txt=df['bigrams'])
+
+
+
+
+#%%
+
+
+
+# tf-idf
+vectorizer = TfidfVectorizer()
+X = vectorizer.fit_transform(df['text'].apply(lambda x: ' '.join(x)))
+# %%
+# count vectorizer
+vectorizer = CountVectorizer()
+X = vectorizer.fit_transform(df['text'].apply(lambda x: ' '.join(x)))
+# %%
+# tf-idf transformer
+transformer = TfidfTransformer()
+X = transformer.fit_transform(X)
 
