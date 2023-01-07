@@ -110,8 +110,13 @@ then changed the cant to can not  et similar
 i did a wordcloud both on single words and bigrams 
 
 
+## tfidf 
+i used tfidf to get the most important words in the conversation, i used the english tweets only
 
+and i generated a wordcloud also starting from it 
 
+## sentiment analysis 
+to get the sentiment analysis of the tweet i decided to use two different models vader and pattern, i used it before removing the stopwords and lemmatization because it is designed to analyz the sentiment of the tweet as it is including slang and emoticons
 
 
 
