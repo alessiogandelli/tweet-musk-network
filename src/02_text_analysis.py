@@ -103,9 +103,7 @@ df['tokens'] = df['tokens'].apply(lambda x: [lemmatizer.lemmatize(word) for word
 df['bigrams'] = df['tokens'].apply(lambda x: list(ngrams(x, 2)))
 df['bigrams'] = df['bigrams'].apply(lambda x: ['_'.join(i) for i in x])
 
-# vectorization for topic modeling
-vectors = vectorizer.fit_transform(df['tokens'].apply(lambda x: ' '.join(x))).sum(axis=0)
-vocab = vectorizer.vocabulary_
+
 
 
 
@@ -147,6 +145,10 @@ df = df[df['lang'] == 'en']
 #%%
 '''WORDCLOUDS'''
 
+# vectorization for TF-IDF
+vectors = vectorizer.fit_transform(df['tokens'].apply(lambda x: ' '.join(x))).sum(axis=0)
+vocab = vectorizer.vocabulary_
+
 text = ' '.join(df['tokens'].apply(lambda x: ' '.join(x)))
 bigrams_list = [item for sublist in df['bigrams'].tolist() for item in sublist]
 bigrams = pd.Series(bigrams_list).value_counts().to_dict()
@@ -167,6 +169,8 @@ df['sentiment_vader'].hist(bins=50)
 
 no = -0.2960
 yes = 0.4019
+
+df['sentiment'] = df['sentiment_vader'].apply(lambda x: 'positive' if x >= yes else ('negative' if x <= no else 'neutral'))
 # add annotation at 0.4019, 200000
 plt.text(0.38, 22000, 'yes')
 plt.text(-0.32, 55000, 'no')
@@ -175,6 +179,7 @@ plt.xlabel('Sentiment Score')
 plt.ylabel('Number of Tweets')
 plt.savefig('sentiment_hist.png', dpi=300)
 
+#%%
 #bigrams list but only of the one with sentiment > 0 
 pos_list = [item for sublist in df[df['sentiment_vader'] >= yes]['tokens'].tolist() for item in sublist]
 neg_list = [item for sublist in df[df['sentiment_vader'] <= no]['tokens'].tolist() for item in sublist]
@@ -183,6 +188,9 @@ neu_list = [item for sublist in df[(df['sentiment_vader'] > no) & (df['sentiment
 pos_dict = pd.Series(pos_list).value_counts().to_dict()
 neg_dict = pd.Series(neg_list).value_counts().to_dict()
 neu_dict = pd.Series(neu_list).value_counts().to_dict()
+
+pos_dict.pop('not')
+neg_dict.pop('not')
 
 make_wordcloud(pos_dict, 'text_pos_wordcloud.png', freq=True)
 make_wordcloud(neg_dict, 'text_neg_wordcloud.png', freq=True)
@@ -207,18 +215,31 @@ docs = df['tokens'].tolist()
 # remove no from docs
 docs = [[word for word in doc if word != 'no'] for doc in docs]
 docs = [[word for word in doc if word != 'not'] for doc in docs]
+docs = [[word for word in doc if word != 'twitter'] for doc in docs]
 # %%
 mgp = MovieGroupProcess(K=4, alpha=0.1, beta=0.1, n_iters=30)
 vocab = set(x for doc in docs for x in doc)
 n_terms = len(vocab)
 y = mgp.fit(docs, n_terms)
+
+#%%
 # save model
-with open('4clustersnono.model', 'wb') as f:
+with open('4clustersnonotw.model', 'wb') as f:
     pickle.dump(mgp, f)
     f.close()
 
+#%%
+# load model
+with open('/Users/alessiogandelli/dev/uni/tweet-musk-network/data/models/10clusters.model', 'rb') as f:
+    mgp10 = pickle.load(f)
+    f.close()
 
+# dict with docs and y 
+# add y to dataframe 
+df['topic_clean'] = y
 
+# max rows
+pd.set_option('display.max_rows', 1000)
 # %%
 
 # helper functions
@@ -262,6 +283,7 @@ def get_topic_name(doc, topic_dict):
 
 
 #%%
+
 doc_count = np.array(mgp.cluster_doc_count)
 print('Number of documents per topic :', doc_count)
 print('*'*20)# topics sorted by the number of documents they are allocated to
@@ -270,13 +292,34 @@ print('Most important clusters (by number of docs inside):',
        top_index)
 print('*'*20)# show the top 5 words in term frequency for each cluster 
 topic_indices = np.arange(start=0, stop=len(doc_count), step=1)
-top_words(mgp.cluster_word_distribution, topic_indices, 5)
+top_words(mgp.cluster_word_distribution, topic_indices, 10)
 # %%
-# assign tweets to clusters
-mgp.load('/Users/alessiogandelli/dev/uni/tweet-musk-network/data/models/4clusters.model')
 
+# get correlation between topic and sentiment
 
-
-
+#get tweets that contains tom in text 
+df_tom = df[df['text'].str.contains('tom')]
 
 # %%
+contingency_table = pd.crosstab(df['topic'], df['sentiment'])
+
+from scipy.stats import chi2_contingency
+
+# Calculate the chi-squared statistic and p-value
+p= chi2_contingency(contingency_table)
+
+# Print the p-value
+print(p)
+# %%
+from scipy.stats import ttest_ind, f_oneway
+
+# For the t-test, you need to split the data into groups based on the topic
+pos = df[df['topic_clean'] == 1]['sentiment']
+neg = df[df['topic_clean'] == 3]['sentiment']
+
+
+# Use the t-test to test for a difference in means between the two groups
+t, p = ttest_ind(pos, neg)
+
+# For ANOVA, you can use the f_oneway function from scipy.stats
+f, p = f_oneway(pos, neg)

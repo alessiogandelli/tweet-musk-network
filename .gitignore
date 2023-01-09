@@ -135,3 +135,11 @@ venv-dsd
 data
 
 imgs/
+
+src/df
+
+*.gml
+
+*.png
+
+# all png files 

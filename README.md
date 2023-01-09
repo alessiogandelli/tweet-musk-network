@@ -120,9 +120,18 @@ to get the sentiment analysis of the tweet i decided to use two different models
 
 
 
+## topic modeling
+ topic modeling is used blabla and i do not use lda but sttm because it is more efficient for short text
+ Therefore, most STTM techniques make the initial assumption that a short text comes from only one topic, reducing the overlapping topics that we see with LDA. This is a good assumption for short texts, but not for long texts.
+
+
+ibbs Sampling Dirichlet Mixture Model (GSDMM) which is a modified LDA 
+ https://dl.acm.org/doi/10.1145/2623330.2623715
+
+ https://arxiv.org/pdf/1904.07695.pdf
 
 
 
-
+ https://pub.towardsai.net/tweet-topic-modeling-part-3-using-short-text-topic-modeling-on-tweets-bc969a827fef
 
 
