@@ -94,7 +94,7 @@ df['created_at'] = df['created_at'].apply(lambda x: x - timedelta(hours=7))
 df['text'] = df['text'].apply(lambda x: 'meme' if x.startswith('https') else x)
 
 # save data
-df.to_csv('musk_timeline.csv')
+#df.to_csv('musk_timeline.csv')
 
 
 

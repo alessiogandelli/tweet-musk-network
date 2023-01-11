@@ -70,7 +70,7 @@ def explore_tree(g,n, df_n, total_reply):
             # add vertex attribute level 
             nodes.append(str(tweet_id))
         
-            edges.append((str(tweet_id), str(tweet['replied_to'])))
+            edges.append(( str(tweet['replied_to']), str(tweet_id)))
 
         print('nodes',len(nodes))
         g.vs.select(name_in = nodes )['level'] = n
@@ -94,7 +94,7 @@ def create_reply_tree(musk_resig):
         g.add_vertex(str(tweet_id), **tweet.to_dict())
 
         if tweet['replied_to'] == musk_resig:             # if the tweet is a reply to musk's tweet
-            edges.append((str(tweet_id), str(musk_resig)))
+            edges.append(( str(musk_resig), str(tweet_id)))
 
     g.add_edges(edges)
 
@@ -160,12 +160,10 @@ g.vs['betweenness'] = g.betweenness()
 g.vs['closeness'] = g.closeness()
 g.vs['eigenvector'] = g.eigenvector_centrality()
 
-# %%
 g.vs['level'] = [1 if l == None else l+1 for l in g.vs['level']]
 g.vs.select(0)['level'] = 0
 
-# mean outdegree per level
-g.vs['outdegree'].groupby(g.vs['level']).mean()
+# mean outdegree per leve
 
 #%%
 
@@ -175,8 +173,8 @@ df_g = df_g.set_index('id')
 df_g['indegree'] = g.vs['indegree']
 df_g['outdegree'] = g.vs['outdegree']
 df_g['betweenness'] = g.vs['betweenness']
-df_g['closeness'] = g.vs['closeness']
-df_g['eigenvector'] = g.vs['eigenvector']
+#df_g['closeness'] = g.vs['closeness']
+#df_g['eigenvector'] = g.vs['eigenvector']
 df_g['level'] = g.vs['level']
 df_g['reply_count'] = g.vs['reply_count']
 df_g['retweet_count'] = g.vs['retweet_count']
@@ -193,24 +191,48 @@ df_g['replied_to'] = g.vs['replied_to']
 #%%
 # get the tweets replint to 1605372724800393216
 # plot g but only the ones eith indegree > 100
-mini = g.vs.select( indegree_gt = 100 ).subgraph()
-# make it undirected
-mini.to_undirected()
+mini = g.vs.select( outdegree_gt = 30 ).subgraph()
 
+# make it undirected
+# set coordinates, y is the level x incremental 
+#import ClusterColoringPalette
+from igraph.drawing.colors import ClusterColoringPalette
+# vertex color is the sentiment
+mini.vs.select(0)['topic'] = 4
+palette = ClusterColoringPalette(len(set(mini.vs['topic'])))
+colors = [palette[index] for index in mini.vs['topic']]
+mini.vs["color"] = colors 
+
+#reingold_tilford_circular, davidson_harel
 
 # use layout_reingold_tilford_circular layout for a circular graph
-fig, ax = plt.subplots(figsize=(100,100))
-ig.plot(mini.to_undirected(),
+fig, ax = plt.subplots(figsize=(8,8))
+ig.plot(mini,
     target = ax,
-    vertex_size= 1,
-    #vertex_label = [r[:5] for r in g_replied.vs['text']],
-    vertex_color='lightblue',
+    vertex_size= [8/(r+1) for r in mini.vs['level']],
+    vertex_label = [r for r in mini.vs['topic']],
+    vertex_color= mini.vs['color'],  #['green' if r == 'positive' else 'red'for r in mini.vs['sentiment']],
     edge_color='grey',
-    layout='reingold_tilford_circular')
+    edge_length=5,
+    layout='davidson_harel')
 
                     
 
 
 
 # %%
-save_graph(g, 'resign_complete_plus.gml')
+# %%
+del g.vs['tokens']
+del g.vs['bigrams']
+del g.vs['hashtags']
+del g.vs['mentions']
+del g.vs['urls']
+g.write_gml('resign_complete_plus.gml', ids="no-such-attribute")
+
+# %%
+
+# load the graph
+g = ig.Graph.Read_GML('resign_complete_plus.gml')
+
+
+# %%

@@ -1,0 +1,24 @@
+```{r}
+# load graph
+library(pacman)
+p_load(igraph)
+```
+
+
+```{r}
+g <- read_graph('resign_complete_plus.gml', 'gml')
+```
+
+```{r}
+mini <- induced_subgraph(g, which(degree(g, mode = 'out') > 100))
+
+l <- layout_as_tree(
+  mini,
+  circular = TRUE,
+  mode = 'out',
+  flip.y = TRUE
+)
+
+plot(g, layout = l)
+```
+
